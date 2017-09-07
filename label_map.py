@@ -1,3 +1,6 @@
+import os
+
+
 class Label:
     def __init__(self, index, name):
         self.name = name
@@ -13,6 +16,8 @@ class Label:
 
 
 def create_label_map(signs, path):
+    with open(path, "w"):
+        pass
     for i in range(signs.shape[0]):
         label_sign = Label(i+1, signs[i])
         label_sign.make_text()
