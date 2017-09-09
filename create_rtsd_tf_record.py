@@ -26,8 +26,7 @@ FLAGS = flags.FLAGS
 
 
 def date_to_tf_file(data, label_map_dict, image_dir):
-    print(data.filename)
-    image_path = os.path.join(image_dir, data['filename'][0])
+    image_path = os.path.join(image_dir, data['filename'].iloc[0])
     with tf.gfile.GFile(image_path, 'rb') as fid:
         encoded_jpg = fid.read()
     encoded_jpg_io = io.BytesIO(encoded_jpg)
@@ -46,18 +45,18 @@ def date_to_tf_file(data, label_map_dict, image_dir):
     classes_text = []
    
     for idx in data.index:
-        xmin.append(float(data.iloc[idx].x_from) / width)
-        ymin.append(float(data.iloc[idx].y_from) / height)
-        xmax.append(float(xmin[-1] + data.iloc[idx].width) / width)
-        ymax.append(float(ymin[-1] + data.iloc[idx].height) / height)
-        classes_text.append(data.iloc[idx].sign_class.encode('utf-8'))
-        classes.append(label_map_dict[data.iloc[idx].sign_class])
+        xmin.append(float(data.loc[idx].x_from) / width)
+        ymin.append(float(data.loc[idx].y_from) / height)
+        xmax.append(float(xmin[-1] + data.loc[idx].width) / width)
+        ymax.append(float(ymin[-1] + data.loc[idx].height) / height)
+        classes_text.append(data.loc[idx].sign_class.encode('utf-8'))
+        classes.append(label_map_dict[data.loc[idx].sign_class])
     
     tf_dat = tf.train.Example(features=tf.train.Features(feature={
       'image/height': dataset_util.int64_feature(height),
       'image/width': dataset_util.int64_feature(width),
-      'image/filename': dataset_util.bytes_feature(data['filename'][0].encode('utf-8')),
-      'image/source_id': dataset_util.bytes_feature(data['filename'][0].encode('utf-8')),
+      'image/filename': dataset_util.bytes_feature(data['filename'].iloc[0].encode('utf-8')),
+      'image/source_id': dataset_util.bytes_feature(data['filename'].iloc[0].encode('utf-8')),
       'image/key/sha256': dataset_util.bytes_feature(key.encode('utf-8')),
       'image/encoded': dataset_util.bytes_feature(encoded_jpg),
       'image/format': dataset_util.bytes_feature(b'jpg'),
@@ -68,7 +67,6 @@ def date_to_tf_file(data, label_map_dict, image_dir):
       'image/object/class/text': dataset_util.bytes_list_feature(classes_text),
       'image/object/class/label': dataset_util.int64_list_feature(classes),
       }))
-    print('End')
     return tf_dat
 
 
