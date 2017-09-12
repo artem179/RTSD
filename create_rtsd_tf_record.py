@@ -22,6 +22,7 @@ flags.DEFINE_string('label_path', '', 'Path to new label file')
 flags.DEFINE_string('image_dir', '/dev/shm/data/rtsd-frames/', 'Path to images dir')
 flags.DEFINE_bool('split', True, 'Split on test and train')
 flags.DEFINE_bool('debug', True, 'Output info')
+flage.DEFINE_bool('many_classes', False, 'On how many classes we have to separate our dataset')
 FLAGS = flags.FLAGS
 
 
@@ -47,8 +48,8 @@ def date_to_tf_file(data, label_map_dict, image_dir):
     for idx in data.index:
         xmin.append(float(data.loc[idx].x_from) / width)
         ymin.append(float(data.loc[idx].y_from) / height)
-        xmax.append(float(xmin[-1] + data.loc[idx].width) / width)
-        ymax.append(float(ymin[-1] + data.loc[idx].height) / height)
+        xmax.append(float(xmin[-1] * width + data.loc[idx].width) / width)
+        ymax.append(float(ymin[-1] * height + data.loc[idx].height) / height)
         classes_text.append(data.loc[idx].sign_class.encode('utf-8'))
         classes.append(label_map_dict[data.loc[idx].sign_class])
     
@@ -81,7 +82,6 @@ def create_tf_record(output_filename, label_map_dict, data):
         
     writer.close()
         
-
 
 def split_on_train_val(data, signs, percent, threshold=4):
     logging.info('Split dataset on train and test')
@@ -117,7 +117,7 @@ def main(_):
     logging.info('Creating label_map.pbtxt')
     data = pd.read_csv(FLAGS.data_dir)
     signs = data.sign_class.unique()
-    label_path = create_label_map(signs, FLAGS.label_path)
+    label_path = create_label_map(signs, FLAGS.label_path, FLAGS.many_classes)
     label_map_dict = label_map_util.get_label_map_dict(label_path)
     
     train, val = split_on_train_val(data, signs, FLAGS.threshold)

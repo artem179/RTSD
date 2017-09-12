@@ -15,11 +15,16 @@ class Label:
         file.close()
 
 
-def create_label_map(signs, path):
+def create_label_map(signs, path, many_classes):
     with open(path, "w"):
         pass
-    for i in range(signs.shape[0]):
-        label_sign = Label(i+1, signs[i])
+    if many_classes:
+        for i in range(signs.shape[0]):
+            label_sign = Label(i+1, signs[i])
+            label_sign.make_text()
+            label_sign.write_pbtxt(path)
+    else:
+        label_sign = Label(1, 'road_sign')
         label_sign.make_text()
         label_sign.write_pbtxt(path)
     return path
