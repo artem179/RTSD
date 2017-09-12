@@ -22,7 +22,7 @@ flags.DEFINE_string('label_path', '', 'Path to new label file')
 flags.DEFINE_string('image_dir', '/dev/shm/data/rtsd-frames/', 'Path to images dir')
 flags.DEFINE_bool('split', True, 'Split on test and train')
 flags.DEFINE_bool('debug', True, 'Output info')
-flage.DEFINE_bool('many_classes', False, 'On how many classes we have to separate our dataset')
+flags.DEFINE_bool('many_classes', False, 'On how many classes we have to separate our dataset')
 FLAGS = flags.FLAGS
 
 
@@ -81,7 +81,7 @@ def create_tf_record(output_filename, label_map_dict, data):
     for idx, image in enumerate(data.filename.unique()):
         if idx % 100 == 0:
             logging.info('On image %d of %d', idx, all_files)
-        tf_file = date_to_tf_file(data[data.filename == image], label_map_dict, FLAGS.image_dir)
+        tf_file = date_to_tf_file(data[data.filename == image], label_map_dict, FLAGS.image_dir, FLAGS.many_classes)
         writer.write(tf_file.SerializeToString())
         
     writer.close()
