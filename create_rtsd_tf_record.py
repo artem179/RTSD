@@ -26,7 +26,7 @@ flage.DEFINE_bool('many_classes', False, 'On how many classes we have to separat
 FLAGS = flags.FLAGS
 
 
-def date_to_tf_file(data, label_map_dict, image_dir):
+def date_to_tf_file(data, label_map_dict, image_dir, many_classes):
     image_path = os.path.join(image_dir, data['filename'].iloc[0])
     with tf.gfile.GFile(image_path, 'rb') as fid:
         encoded_jpg = fid.read()
@@ -50,8 +50,12 @@ def date_to_tf_file(data, label_map_dict, image_dir):
         ymin.append(float(data.loc[idx].y_from) / height)
         xmax.append(float(xmin[-1] * width + data.loc[idx].width) / width)
         ymax.append(float(ymin[-1] * height + data.loc[idx].height) / height)
-        classes_text.append(data.loc[idx].sign_class.encode('utf-8'))
-        classes.append(label_map_dict[data.loc[idx].sign_class])
+        if many_classes:
+            classes_text.append(data.loc[idx].sign_class.encode('utf-8'))
+            classes.append(label_map_dict[data.loc[idx].sign_class])
+        else:
+            classes_text.append('road_sign'.encode('utf-8'))
+            classes.append(1)
     
     tf_dat = tf.train.Example(features=tf.train.Features(feature={
       'image/height': dataset_util.int64_feature(height),
