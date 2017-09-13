@@ -8,6 +8,7 @@ import os
 import io
 import hashlib
 
+
 sys.path.append('/home/ubuntu/tensorflow/models')
 from object_detection.utils import dataset_util
 from object_detection.utils import label_map_util
@@ -85,10 +86,32 @@ def create_tf_record(output_filename, label_map_dict, data):
         writer.write(tf_file.SerializeToString())
         
     writer.close()
-        
+
+    
+def create_counted_labels(data):
+    all_images = data.filename.unique()
+    length = all_images.shape[0]
+    labels = []
+    classes = data.sign_class.unique()
+    classes_len = classes.shape[0]
+    class_num = {}
+    for i in range(classes_len):
+        class_num[classes[i]] = i
+    for image in all_images:
+        counter_for_image = np.zeros(classes_len, dtype=np.int8)
+        for class_ in np.array(data[data.filename == image].sign_class):
+            counter_for_image[class_num[class_]] += 1
+        labels.append(counter_for_image)
+    labels = pd.DataFrame(labels, class_num.keys())
+    labels['filename'] = all_images
+    return labels
 
 def split_on_train_val(data, signs, percent, threshold=4):
     logging.info('Split dataset on train and test')
+    
+    labels_data = create_counted_labels(data)
+    
+    
     val = []
     train = []
     for sign in signs:
@@ -96,11 +119,13 @@ def split_on_train_val(data, signs, percent, threshold=4):
         if tr.shape[0] < threshold:
             train.append(tr)
         else:
-            val_mask = np.random.rand(tr.shape[0]) < percent
+            val_mask = np.random.rand(tr.shape[0]) < (1 - percent)
             if tr.iloc[val_mask].shape[0] == 0:
                 val_mask = [0]
-            elif tr.shape[0]/tr.iloc[val_mask].shape[0] <= 2:
+            elif tr.shape[0]/tr.iloc[val_mask].shape[0] > 2:
                 val_mask = [i for i in range(round(tr.shape[0]/2) - 1)]
+            for i in val_mask:
+                train.append(
             val.append(tr.iloc[val_mask])
             tr = tr.drop(tr.iloc[val_mask].index)
             train.append(tr)
