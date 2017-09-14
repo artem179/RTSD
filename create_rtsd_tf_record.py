@@ -10,6 +10,7 @@ import hashlib
 
 
 sys.path.append('/home/ubuntu/tensorflow/models')
+from sklearn.cross_validation import train_test_split
 from object_detection.utils import dataset_util
 from object_detection.utils import label_map_util
 from label_map import create_label_map
@@ -24,6 +25,7 @@ flags.DEFINE_string('image_dir', '/dev/shm/data/rtsd-frames/', 'Path to images d
 flags.DEFINE_bool('split', True, 'Split on test and train')
 flags.DEFINE_bool('debug', True, 'Output info')
 flags.DEFINE_bool('many_classes', False, 'On how many classes we have to separate our dataset')
+flags.DEFINE_bool('clever_split', False, 'more clever splitting dataset')
 FLAGS = flags.FLAGS
 
 
@@ -97,7 +99,11 @@ def create_counted_labels(data):
     class_num = {}
     for i in range(classes_len):
         class_num[classes[i]] = i
+    cur_num = 0
     for image in all_images:
+        cur_num += 1
+        if cur_num % 1000 == 0:
+            logging.info('Creating train.csv test.csv iter - {}'.format(cur_num))
         counter_for_image = np.zeros(classes_len, dtype=np.int8)
         for class_ in np.array(data[data.filename == image].sign_class):
             counter_for_image[class_num[class_]] += 1
@@ -106,35 +112,37 @@ def create_counted_labels(data):
     labels['filename'] = all_images
     return labels
 
-def split_on_train_val(data, signs, percent, threshold=4):
+
+def split_on_train_val(data, signs, percent, threshold=4, clever_split=False):
     logging.info('Split dataset on train and test')
     
-    labels_data = create_counted_labels(data)
-    
-    
-    val = []
-    train = []
-    for sign in signs:
-        tr = data[data.sign_class == sign]
-        if tr.shape[0] < threshold:
-            train.append(tr)
-        else:
-            val_mask = np.random.rand(tr.shape[0]) < (1 - percent)
-            if tr.iloc[val_mask].shape[0] == 0:
-                val_mask = [0]
-            elif tr.shape[0]/tr.iloc[val_mask].shape[0] > 2:
-                val_mask = [i for i in range(round(tr.shape[0]/2) - 1)]
-            for i in val_mask:
-                train.append(
-            val.append(tr.iloc[val_mask])
-            tr = tr.drop(tr.iloc[val_mask].index)
-            train.append(tr)
-            if tr.shape[0] < 2000 or val[-1].shape[0] < 1000:
-                logging.info('Small dataset for name sign : %s\ntrain - %d imgs \ntest - %d imgs' % 
-                    (sign, tr.shape[0], val[-1].shape[0]))
-    logging.info('Creating train.csv test.csv')
-    train = pd.concat(train).reset_index(drop=True)
-    val = pd.concat(val).reset_index(drop=True)
+    if clever_split:
+        val = []
+        train = []
+        for sign in signs:
+            tr = data[data.sign_class == sign]
+            if tr.shape[0] < threshold:
+                train.append(tr)
+            else:
+                val_mask = np.random.rand(tr.shape[0]) < (1 - percent)
+                if tr.iloc[val_mask].shape[0] == 0:
+                    val_mask = [0]
+                elif tr.shape[0]/tr.iloc[val_mask].shape[0] > 2:
+                    val_mask = [i for i in range(round(tr.shape[0]/2) - 1)]
+                for i in val_mask:
+                    train.append(
+                val.append(tr.iloc[val_mask])
+                tr = tr.drop(tr.iloc[val_mask].index)
+                train.append(tr)
+                if tr.shape[0] < 2000 or val[-1].shape[0] < 1000:
+                    logging.info('Small dataset for name sign : %s\ntrain - %d imgs \ntest - %d imgs' % 
+                        (sign, tr.shape[0], val[-1].shape[0]))
+        logging.info('Creating train.csv test.csv')
+        train = pd.concat(train).reset_index(drop=True)
+        val = pd.concat(val).reset_index(drop=True)
+    else:
+        labels_data = create_counted_labels(data)
+        train, val = train_test_split(labels_data, test_size=0.1, random_state=43)
     train.to_csv('train.csv')
     val.to_csv('val.csv')
     return train, val
