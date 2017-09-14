@@ -19,13 +19,17 @@ flags = tf.app.flags
 flags.DEFINE_string('train_output_path', '', 'Path to output TFRecord')
 flags.DEFINE_string('val_output_path', '', 'Path to output TFRecord')
 flags.DEFINE_float('threshold', 0.1, 'threshold for splitting dataset on val and test')
-flags.DEFINE_string('data_dir', '', 'Path to input data file')
+flags.DEFINE_string('data_dir', '/dev/shm/data/full-gt.csv', 'Path to input data file')
 flags.DEFINE_string('label_path', '', 'Path to new label file')
 flags.DEFINE_string('image_dir', '/dev/shm/data/rtsd-frames/', 'Path to images dir')
 flags.DEFINE_bool('split', True, 'Split on test and train')
 flags.DEFINE_bool('debug', True, 'Output info')
 flags.DEFINE_bool('many_classes', False, 'On how many classes we have to separate our dataset')
 flags.DEFINE_bool('clever_split', False, 'more clever splitting dataset')
+flags.DEFINE_bool('with_csv', False, 'you already have .csv files')
+flags.DEFINE_string('train_csv', '/home/ubuntu/RTSD/train.csv', 'path to .csv train')
+flags.DEFINE_string('val_csv', '/home/ubuntu/RTSD/val.csv', 'path to .csv val')
+                    
 FLAGS = flags.FLAGS
 
 
@@ -78,13 +82,13 @@ def date_to_tf_file(data, label_map_dict, image_dir, many_classes):
     return tf_dat
 
 
-def create_tf_record(output_filename, label_map_dict, data):
+def create_tf_record(output_filename, label_map_dict, data, data_big):
     writer = tf.python_io.TFRecordWriter(output_filename)
     all_files = data.filename.unique().shape[0]
     for idx, image in enumerate(data.filename.unique()):
         if idx % 100 == 0:
             logging.info('On image %d of %d', idx, all_files)
-        tf_file = date_to_tf_file(data[data.filename == image], label_map_dict, FLAGS.image_dir, FLAGS.many_classes)
+        tf_file = date_to_tf_file(data_big[data_big.filename == image], label_map_dict, FLAGS.image_dir, FLAGS.many_classes)
         writer.write(tf_file.SerializeToString())
         
     writer.close()
@@ -108,7 +112,7 @@ def create_counted_labels(data):
         for class_ in np.array(data[data.filename == image].sign_class):
             counter_for_image[class_num[class_]] += 1
         labels.append(counter_for_image)
-    labels = pd.DataFrame(labels, class_num.keys())
+    labels = pd.DataFrame(labels, columns=class_num.keys())
     labels['filename'] = all_images
     return labels
 
@@ -130,8 +134,7 @@ def split_on_train_val(data, signs, percent, threshold=4, clever_split=False):
                 elif tr.shape[0]/tr.iloc[val_mask].shape[0] > 2:
                     val_mask = [i for i in range(round(tr.shape[0]/2) - 1)]
                 for i in val_mask:
-                    train.append(
-                val.append(tr.iloc[val_mask])
+                    train.append(val.append(tr.iloc[val_mask]))
                 tr = tr.drop(tr.iloc[val_mask].index)
                 train.append(tr)
                 if tr.shape[0] < 2000 or val[-1].shape[0] < 1000:
@@ -153,16 +156,20 @@ def main(_):
         logging.getLogger().setLevel(logging.INFO)
     logging.info('Creating label_map.pbtxt')
     data = pd.read_csv(FLAGS.data_dir)
+        
     signs = data.sign_class.unique()
     label_path = create_label_map(signs, FLAGS.label_path, FLAGS.many_classes)
     label_map_dict = label_map_util.get_label_map_dict(label_path)
     
-    train, val = split_on_train_val(data, signs, FLAGS.threshold)
-    logging.info('%d training and %d validation sets', train.shape[0], val.shape[0])
-    
+    if not FLAGS.with_csv:
+        train, val = split_on_train_val(data, signs, FLAGS.threshold)
+        logging.info('%d training and %d validation sets', train.shape[0], val.shape[0])
+    else:
+        train = pd.read_csv(FLAGS.train_csv)
+        val = pd.read_csv(FLAGS.val_csv)
     logging.info('Starting write files')
-    create_tf_record(FLAGS.train_output_path, label_map_dict, train)
-    create_tf_record(FLAGS.val_output_path, label_map_dict, val)
+    create_tf_record(FLAGS.train_output_path, label_map_dict, train, data)
+    create_tf_record(FLAGS.val_output_path, label_map_dict, val, data)
     logging.info('Finished')
 
 
