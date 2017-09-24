@@ -8,7 +8,7 @@ import os
 import io
 import hashlib
 
-sys.path.append('/home/ubuntu/tensorflow/models')
+sys.path.append('~/.virtualenvs/cv/lib/python3.5/site-packages/tensorflow/models')
 from object_detection.utils import dataset_util
 from object_detection.utils import label_map_util
 from label_map import create_label_map
