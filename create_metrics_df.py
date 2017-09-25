@@ -1,36 +1,30 @@
 import numpy as np
 import os
-import six.moves.urllib as urllib
-import sys
-import tarfile
 import tensorflow as tf
-import zipfile
+import sys
+import pandas as pd
 
 from collections import defaultdict
 from io import StringIO
-from matplotlib import pyplot as plt
 from PIL import Image
 from tqdm import tqdm
 
 sys.path.append("/home/artem/.virtualenvs/cv/lib/python3.5/site-packages/tensorflow/models/")
-from object_detection.utils import label_map_util
-
-from object_detection.utils import visualization_utils as vis_util
 
 flags = tf.app.flags
-flags.DEFINE_string('val_path', '~/RTSD/RTSD/val.csv', 'Path to val.csv')
-flags.DEFINE_string('weights', '~/RTSD/RTSD/frozen4/frozen_inference_graph.pb', 'Path to weights')
+flags.DEFINE_string('val_path', '/home/artem/RTSD/RTSD/val.csv', 'Path to val.csv')
+flags.DEFINE_string('weights', '/home/artem/RTSD/RTSD/frozen4/frozen_inference_graph.pb', 'Path to weights')
 flags.DEFINE_string('label', '/home/artem/RTSD/data2/label_map.pbtxt', 'Path to label_map.pbtxt')
 flags.DEFINE_string('path_to_data', '/home/artem/RTSD/data/rtsd-frames/', 'Path to data dic with frames')
-flags.DEFINE_string('path_to_data', '~/RTSD/data/full-gt.csv', 'Path to data.csv')
-flags.DEFINE_int('num_class', 1, 'num of classes')
+flags.DEFINE_string('data', '/home/artem/RTSD/data/full-gt.csv', 'Path to data.csv')
+flags.DEFINE_integer('num_class', 1, 'num of classes')
 flags.DEFINE_string('output', '', 'Path to output.csv')
 FLAGS = flags.FLAGS
 
 
 def load_image_into_numpy_array(image):
-     (im_width, im_height) = image.size
-     return np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
+    (im_width, im_height) = image.size
+    return np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
 
 
 def bb_intersection_over_union(boxA, boxB, w, h):
