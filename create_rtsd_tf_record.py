@@ -8,6 +8,7 @@ import os
 import io
 import hashlib
 
+sys.path.append('~/.virtualenvs/cv/lib/python3.5/site-packages/tensorflow/models')
 
 sys.path.append('/home/ubuntu/tensorflow/models/research')
 from sklearn.cross_validation import train_test_split
@@ -29,11 +30,15 @@ flags.DEFINE_bool('clever_split', False, 'more clever splitting dataset')
 flags.DEFINE_bool('with_csv', False, 'you already have .csv files')
 flags.DEFINE_string('train_csv', '/home/ubuntu/RTSD/train.csv', 'path to .csv train')
 flags.DEFINE_string('val_csv', '/home/ubuntu/RTSD/val.csv', 'path to .csv val')
+flags.DEFINE_bool('group_of_class', True, 'how much classes does we generate')
                     
 FLAGS = flags.FLAGS
 
 
-def date_to_tf_file(data, label_map_dict, image_dir, many_classes):
+def date_to_tf_file(data, label_map_dict, image_dir, many_classes, group_of_class):
+    #print(data['filename'].iloc[0])
+    if data['filename'].shape[0] == 0:
+        return 0
     image_path = os.path.join(image_dir, data['filename'].iloc[0])
     with tf.gfile.GFile(image_path, 'rb') as fid:
         encoded_jpg = fid.read()
@@ -58,8 +63,12 @@ def date_to_tf_file(data, label_map_dict, image_dir, many_classes):
         xmax.append(float(xmin[-1] * width + data.loc[idx].width) / width)
         ymax.append(float(ymin[-1] * height + data.loc[idx].height) / height)
         if many_classes:
-            classes_text.append(data.loc[idx].sign_class.encode('utf-8'))
-            classes.append(label_map_dict[data.loc[idx].sign_class])
+            if group_of_class:
+                classes_text.append(data.loc[idx].sign_class[0].encode('utf-8'))
+                classes.append(label_map_dict[data.loc[idx].sign_class[0]])
+            else:
+                classes_text.append(data.loc[idx].sign_class.encode('utf-8'))
+                classes.append(label_map_dict[data.loc[idx].sign_class])
         else:
             classes_text.append('road_sign'.encode('utf-8'))
             classes.append(1)
@@ -82,14 +91,16 @@ def date_to_tf_file(data, label_map_dict, image_dir, many_classes):
     return tf_dat
 
 
-def create_tf_record(output_filename, label_map_dict, data, data_big):
+def create_tf_record(output_filename, label_map_dict, data, data_big, group_of_class):
     writer = tf.python_io.TFRecordWriter(output_filename)
     all_files = data.filename.unique().shape[0]
     for idx, image in enumerate(data.filename.unique()):
         if idx % 100 == 0:
             logging.info('On image %d of %d', idx, all_files)
-        tf_file = date_to_tf_file(data_big[data_big.filename == image], label_map_dict, FLAGS.image_dir, FLAGS.many_classes)
-        writer.write(tf_file.SerializeToString())
+        tf_file = date_to_tf_file(data_big[data_big.filename == image], label_map_dict, FLAGS.image_dir, FLAGS.many_classes,
+                                 group_of_class)
+        if tf_file != 0: 
+            writer.write(tf_file.SerializeToString())
         
     writer.close()
 
@@ -158,7 +169,7 @@ def main(_):
     data = pd.read_csv(FLAGS.data_dir)
         
     signs = data.sign_class.unique()
-    label_path = create_label_map(signs, FLAGS.label_path, FLAGS.many_classes)
+    label_path = create_label_map(signs, FLAGS.label_path, FLAGS.many_classes, FLAGS.group_of_class)
     label_map_dict = label_map_util.get_label_map_dict(label_path)
     
     if not FLAGS.with_csv:
@@ -168,8 +179,8 @@ def main(_):
         train = pd.read_csv(FLAGS.train_csv)
         val = pd.read_csv(FLAGS.val_csv)
     logging.info('Starting write files')
-    create_tf_record(FLAGS.train_output_path, label_map_dict, train, data)
-    create_tf_record(FLAGS.val_output_path, label_map_dict, val, data)
+    create_tf_record(FLAGS.train_output_path, label_map_dict, train, data, FLAGS.group_of_class)
+    create_tf_record(FLAGS.val_output_path, label_map_dict, val, data, FLAGS.group_of_class)
     logging.info('Finished')
 
 
