@@ -9,7 +9,7 @@ import io
 import hashlib
 
 
-sys.path.append('/home/ubuntu/tensorflow/models')
+sys.path.append('/home/ubuntu/tensorflow/models/research')
 from sklearn.cross_validation import train_test_split
 from object_detection.utils import dataset_util
 from object_detection.utils import label_map_util
