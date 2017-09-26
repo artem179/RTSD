@@ -1,5 +1,5 @@
 import os
-
+import numpy as np
 
 class Label:
     def __init__(self, index, name):
@@ -15,10 +15,11 @@ class Label:
         file.close()
 
 
-def create_label_map(signs, path, many_classes):
+def create_label_map(signs, path, many_classes, group_of_class):
     with open(path, "w"):
         pass
     if many_classes:
+        if group_of_class: signs = np.array([str(i) for i in range(1, 9)])
         for i in range(signs.shape[0]):
             label_sign = Label(i+1, signs[i])
             label_sign.make_text()
