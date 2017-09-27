@@ -39,6 +39,7 @@ def date_to_tf_file(data, label_map_dict, image_dir, many_classes, group_of_clas
     #print(data['filename'].iloc[0])
     if data['filename'].shape[0] == 0:
         return 0
+    # print(data)
     image_path = os.path.join(image_dir, data['filename'].iloc[0])
     with tf.gfile.GFile(image_path, 'rb') as fid:
         encoded_jpg = fid.read()
@@ -97,6 +98,8 @@ def create_tf_record(output_filename, label_map_dict, data, data_big, group_of_c
     for idx, image in enumerate(data.filename.unique()):
         if idx % 100 == 0:
             logging.info('On image %d of %d', idx, all_files)
+        if data_big[data_big.filename == image].shape[0] == 0:
+           print(image)
         tf_file = date_to_tf_file(data_big[data_big.filename == image], label_map_dict, FLAGS.image_dir, FLAGS.many_classes,
                                  group_of_class)
         if tf_file != 0: 

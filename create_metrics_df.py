@@ -12,11 +12,11 @@ from tqdm import tqdm
 sys.path.append("/home/artem/.virtualenvs/cv/lib/python3.5/site-packages/tensorflow/models/")
 
 flags = tf.app.flags
-flags.DEFINE_string('val_path', '/home/artem/RTSD/RTSD/test_k.csv', 'Path to val.csv')
-flags.DEFINE_string('weights', '/home/artem/RTSD/RTSD/frozen7/frozen_inference_graph.pb', 'Path to weights')
-flags.DEFINE_string('label', '/home/artem/RTSD/RTSD/label_map.pbtxt', 'Path to label_map.pbtxt')
-flags.DEFINE_string('path_to_data', '/home/artem/RTSD/data/rtsd-frames/', 'Path to data dic with frames')
-flags.DEFINE_string('data', '/home/artem/RTSD/data/full-gt.csv', 'Path to data.csv')
+flags.DEFINE_string('val_path', '/home/ubuntu/RTSD/test_k.csv', 'Path to val.csv')
+flags.DEFINE_string('weights', '/home/ubuntu/frozen7/frozen_inference_graph.pb', 'Path to weights')
+flags.DEFINE_string('label', '/home/ubuntu/RTSD/label_map.pbtxt', 'Path to label_map.pbtxt')
+flags.DEFINE_string('path_to_data', '/dev/shm/data/rtsd-frames/', 'Path to data dic with frames')
+flags.DEFINE_string('data', '/dev/shm/data/full-gt.csv', 'Path to data.csv')
 flags.DEFINE_integer('num_class', 8, 'num of classes')
 flags.DEFINE_string('output', '', 'Path to output.csv')
 FLAGS = flags.FLAGS
@@ -117,6 +117,9 @@ def predict_on_val(path_to_ckpt, path_to_files, TEST_IMAGE_PATHS, data, output):
                 (boxes, scores, classes, num) = sess.run(
                     [detection_boxes, detection_scores, detection_classes, num_detections],
                     feed_dict={image_tensor: image_np_expanded})
+                if data[data.filename == TEST_IMAGE_PATHS[i]].shape[0] == 0:
+                    print("We pass the image - {} , because this image is not in the dataset".format(TEST_IMAGE_PATHS[i]))
+                    continue
                 cur_scores, cur_y_pred, cur_y_real, cur_infB = get_stat(boxes[scores > 0.0001], 
                                                                    data[data.filename == TEST_IMAGE_PATHS[i]],
                                                                         image_np.shape[0], image_np.shape[1], 
