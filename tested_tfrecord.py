@@ -14,7 +14,7 @@ FLAGS = flags.FLAGS
 
 def mse(image1, image2):
     err = np.sum((image1.astype("float") - image2.astype("float")) ** 2)
-    err /= float(image1.shape[0] * image2.shape[1])
+        err /= float(image1.shape[0] * image2.shape[1])
     return err
 
 

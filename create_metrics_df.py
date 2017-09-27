@@ -12,12 +12,12 @@ from tqdm import tqdm
 sys.path.append("/home/artem/.virtualenvs/cv/lib/python3.5/site-packages/tensorflow/models/")
 
 flags = tf.app.flags
-flags.DEFINE_string('val_path', '/home/artem/RTSD/RTSD/val.csv', 'Path to val.csv')
-flags.DEFINE_string('weights', '/home/artem/RTSD/RTSD/frozen4/frozen_inference_graph.pb', 'Path to weights')
-flags.DEFINE_string('label', '/home/artem/RTSD/data2/label_map.pbtxt', 'Path to label_map.pbtxt')
+flags.DEFINE_string('val_path', '/home/artem/RTSD/RTSD/test_k.csv', 'Path to val.csv')
+flags.DEFINE_string('weights', '/home/artem/RTSD/RTSD/frozen7/frozen_inference_graph.pb', 'Path to weights')
+flags.DEFINE_string('label', '/home/artem/RTSD/RTSD/label_map.pbtxt', 'Path to label_map.pbtxt')
 flags.DEFINE_string('path_to_data', '/home/artem/RTSD/data/rtsd-frames/', 'Path to data dic with frames')
 flags.DEFINE_string('data', '/home/artem/RTSD/data/full-gt.csv', 'Path to data.csv')
-flags.DEFINE_integer('num_class', 1, 'num of classes')
+flags.DEFINE_integer('num_class', 8, 'num of classes')
 flags.DEFINE_string('output', '', 'Path to output.csv')
 FLAGS = flags.FLAGS
 
@@ -42,7 +42,7 @@ def bb_intersection_over_union(boxA, boxB, w, h):
     return iou
 
 
-def get_stat(bA, bB, w, h, score):
+def get_stat(bA, bB, w, h, score, classes):
     y_scores = []
     y_pred = []
     y_real = []
@@ -64,7 +64,7 @@ def get_stat(bA, bB, w, h, score):
                     infB.append(['small', filename])
                 else:
                     infB.append(['large', filename])
-                y_pred.append(int(bB.iloc[i].sign_class[0]))
+                y_pred.append(int(classes[it]))
                 y_real.append(int(bB.iloc[i].sign_class[0]))
                 y_scores.append(score[it])
                 mask[i] = False
@@ -74,7 +74,7 @@ def get_stat(bA, bB, w, h, score):
                 infB.append(['small', filename])
             else:
                 infB.append(['large', filename])
-            y_pred.append(-1)
+            y_pred.append(int(classes[it]))
             y_real.append(0)
             y_scores.append(score[it])
         it += 1
@@ -120,7 +120,7 @@ def predict_on_val(path_to_ckpt, path_to_files, TEST_IMAGE_PATHS, data, output):
                 cur_scores, cur_y_pred, cur_y_real, cur_infB = get_stat(boxes[scores > 0.0001], 
                                                                    data[data.filename == TEST_IMAGE_PATHS[i]],
                                                                         image_np.shape[0], image_np.shape[1], 
-                                                                        scores[0])
+                                                                        scores[0], classes[0])
                 y_scores += cur_scores
                 y_pred += cur_y_pred
                 y_real += cur_y_real
