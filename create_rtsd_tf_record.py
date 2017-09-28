@@ -31,6 +31,7 @@ flags.DEFINE_bool('with_csv', False, 'you already have .csv files')
 flags.DEFINE_string('train_csv', '/home/ubuntu/RTSD/train.csv', 'path to .csv train')
 flags.DEFINE_string('val_csv', '/home/ubuntu/RTSD/val.csv', 'path to .csv val')
 flags.DEFINE_bool('group_of_class', True, 'how much classes does we generate')
+flags.DEFINE_bool('greedy_alg', True, 'which algo we use to split our datasets')
                     
 FLAGS = flags.FLAGS
 
@@ -99,7 +100,7 @@ def create_tf_record(output_filename, label_map_dict, data, data_big, group_of_c
         if idx % 100 == 0:
             logging.info('On image %d of %d', idx, all_files)
         if data_big[data_big.filename == image].shape[0] == 0:
-           print(image)
+            print(image)
         tf_file = date_to_tf_file(data_big[data_big.filename == image], label_map_dict, FLAGS.image_dir, FLAGS.many_classes,
                                  group_of_class)
         if tf_file != 0: 
@@ -159,7 +160,23 @@ def split_on_train_val(data, signs, percent, threshold=4, clever_split=False):
         val = pd.concat(val).reset_index(drop=True)
     else:
         labels_data = create_counted_labels(data)
-        train, val = train_test_split(labels_data, test_size=0.1, random_state=43)
+        if FLAGS.greedy_alg:
+            k_v = (labels_data.sum()*FLAGS.threshold).astype(int)
+            for clas in k_v[k_v == 0].index:
+                k_v[clas] = 1
+            data2 = labels_data[k_v.sort_values().index]
+            for col in data2.columns:
+                data2[col] = data2[col]/k_v[col]
+            sort_d = -(-data2).sort_values(by=data2.columns.tolist())
+            indxs = []
+            for inx in sort_d.index:
+                if ((k_v - np.array(data.loc[inx])) < 0).sum() == 0:
+                    k_v -= np.array(data.loc[inx])
+                    indxs.append(inx)
+            train = labels_data.loc[indxs]
+            val = labels_data[np.logical_not(labels_data.isin(indxs))]
+        else:
+            train, val = train_test_split(labels_data, test_size=0.1, random_state=43)
     train.to_csv('train.csv')
     val.to_csv('val.csv')
     return train, val
