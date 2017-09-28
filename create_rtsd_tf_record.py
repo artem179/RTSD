@@ -174,7 +174,7 @@ def split_on_train_val(data, signs, percent, threshold=4, clever_split=False):
                     k_v -= np.array(data.loc[inx])
                     indxs.append(inx)
             train = labels_data.loc[indxs]
-            val = labels_data[np.logical_not(labels_data.isin(indxs))]
+            val = labels_data[np.logical_not(labels_data.index.isin(indxs))]
         else:
             train, val = train_test_split(labels_data, test_size=0.1, random_state=43)
     train.to_csv('train.csv')
