@@ -65,12 +65,14 @@
 <img src="images/predSSDincv2.png" width="600">
 </p>
 Время предикта на K40 были немного лучше чем у Faster-RCNN.
+
 ### [R-FCN](https://arxiv.org/pdf/1605.06409.pdf)
 Лучший результат был получен при использовании в качестве базовой архитектуры ResNet-101. Основные параметры обучения можно
 найти в `configs/r-fcn.config`.
 <p align="center"> 
 <img src="images/predRFCN.png" width="600">
 </p>
+
 ### [Faster-RCNN](https://arxiv.org/pdf/1506.01497.pdf)
 Faser-RCNN показал наилучшей результат на тестовой выборке, поэтому я также обучил этот детектор при разбиение "8:2".
 Основные параметры обучения можно найти в `configs/faster-rcnn.config`.
