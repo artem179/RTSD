@@ -62,7 +62,7 @@
 размера и заполнением как-то оставшееся пространство) и базовая архитектура - inception_v2. Остальные параметры обучения
 можно найти в `configs/ssd.config`.
 <p align="center"> 
-<img src="images/predSSDincv2.png" width="600">
+<img src="images/predSSDincv2.png" width="700">
 </p>
 Время предикта на K40 были немного лучше чем у Faster-RCNN.
 
@@ -70,24 +70,33 @@
 Лучший результат был получен при использовании в качестве базовой архитектуры ResNet-101. Основные параметры обучения можно
 найти в `configs/r-fcn.config`.
 <p align="center"> 
-<img src="images/predRFCN.png" width="600">
+<img src="images/predRFCN.png" width="700">
 </p>
 
 ### [Faster-RCNN](https://arxiv.org/pdf/1506.01497.pdf)
 Faser-RCNN показал наилучшей результат на тестовой выборке, поэтому я также обучил этот детектор при разбиение "8:2".
 Основные параметры обучения можно найти в `configs/faster-rcnn.config`.
-![ssd](images/predFasterRCNN-v3.png) ![ssd](images/result.png) ![ssd](images/for_classes.png) 
+
+<p align="center"> 
+<img src="images/predFasterRCNN-v3.png" width="700">
+<img src="images/result.png" width="600">
+<img src="images/for_classes.png" width="600">
+</p>
+
 Как мы видим особые трудности вызывает class_8, его тяжелее всего детектить. Я посмотрел некоторые примеры в test выборки на
 которых детектор ошибался и заметил, что довольно часто детектор видит какие-то маленькие знаки, которые не попали в 
 разметку. Вот пример:
 <p align="center"> 
 <img src="images/road_signs.jpg" width="750">
 </p>
+
 ## Вывод
+
 ### Результат
 До результатов написанной под эту задачу сети детекторы не дотягивают (AUC Кости ~ 0.98), однако потенциально можно
 попробовать улучшить результат: более хитро подбирать картинки в batch, попробовать 
 [DSSD](https://arxiv.org/pdf/1701.06659.pdf), попробовать поиграться с различной аугментацией и т.д. 
+
 ### Tensorflow OD API
 Довольно удобный инструмент, чем-то напоминающий Caffe своими prototxt и config, однако видно, что он еще не доработан -
 много глючных моментов: иногда при обучении подтекает память, 
