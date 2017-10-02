@@ -120,11 +120,7 @@ def predict_on_val(path_to_ckpt, path_to_files, TEST_IMAGE_PATHS, data, output):
                 if data[data.filename == TEST_IMAGE_PATHS[i]].shape[0] == 0:
                     print("We pass the image - {} , because this image is not in the dataset".format(TEST_IMAGE_PATHS[i]))
                     continue
-<<<<<<< HEAD
-                cur_scores, cur_y_pred, cur_y_real, cur_infB = get_stat(boxes[scores >= 0.0], 
-=======
-                cur_scores, cur_y_pred, cur_y_real, cur_infB = get_stat(boxes[scores > 0.0001], 
->>>>>>> 4167f04f07b9b35415c7a77233b72a90cfacc671
+                cur_scores, cur_y_pred, cur_y_real, cur_infB = get_stat(boxes[scores >= 0.0],
                                                                    data[data.filename == TEST_IMAGE_PATHS[i]],
                                                                         image_np.shape[0], image_np.shape[1], 
                                                                         scores[0], classes[0])
