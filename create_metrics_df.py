@@ -117,7 +117,10 @@ def predict_on_val(path_to_ckpt, path_to_files, TEST_IMAGE_PATHS, data, output):
                 (boxes, scores, classes, num) = sess.run(
                     [detection_boxes, detection_scores, detection_classes, num_detections],
                     feed_dict={image_tensor: image_np_expanded})
-                cur_scores, cur_y_pred, cur_y_real, cur_infB = get_stat(boxes[scores > 0.0001], 
+                if data[data.filename == TEST_IMAGE_PATHS[i]].shape[0] == 0:
+                    print("We pass the image - {} , because this image is not in the dataset".format(TEST_IMAGE_PATHS[i]))
+                    continue
+                cur_scores, cur_y_pred, cur_y_real, cur_infB = get_stat(boxes[scores >= 0.0], 
                                                                    data[data.filename == TEST_IMAGE_PATHS[i]],
                                                                         image_np.shape[0], image_np.shape[1], 
                                                                         scores[0], classes[0])
